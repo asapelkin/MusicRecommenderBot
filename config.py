@@ -1,3 +1,3 @@
-token = ''
-lastFmKey = ''
-sharedSecret = ''
+token = 'sdf'
+lastFmKey = 'sdf'
+sharedSecret = 'sdf'
