@@ -1,0 +1,3 @@
+token = ''
+lastFmKey = ''
+sharedSecret = ''
