@@ -1,4 +1,6 @@
 from urllib.request import urlopen
+from urllib.parse import quote
+import urllib
 import xml.etree.ElementTree
 #
 
@@ -8,6 +10,13 @@ class Artist:
         self.image = image
         self.url = url
 
+    def __eq__(self, other):
+        if self.name == other.name:
+            return True
+        else:
+            return False
+
+
 class Track:
     def __init__(self, artist, name, image, url):
         self.artist = artist
@@ -15,15 +24,69 @@ class Track:
         self.image = image
         self.url = url
 
-def getSimilarArtists(apikey, artist, track =""):
-    method = "artist"
-    query = "http://ws.audioscrobbler.com/2.0/?method=" + method + ".getsimilar&artist="
-    query = query + artist + "&track=" + track + "&api_key=" + apikey
-    print(query)
-    try:
-        req = urlopen(query)
-    except BaseException:
+    def __eq__(self, other):
+        if self.name == other.name and self.artist == other.artist:
+            return True
+        else:
+            return False
+
+
+def getSimilarFromArray(apikey, array, method = "artist"):
+    result = []
+    com_array = []
+    for item in array:
+        artTrArr = item.split('-')
+        artist_name = ""
+        track_name = ""
+        if len(artTrArr) >= 1:
+            artist_name = artTrArr[0]
+        if len(artTrArr) == 2:
+            track_name = artTrArr[1]
+        if len(artTrArr) > 2:
+            continue
+
+        artist_name = artist_name.strip()
+        track_name = track_name.strip()
+
+        print("artist_name = " + artist_name)
+        print("track_name = " + track_name)
+
+        simular = getSimilar(apikey, artist_name, track_name, method)
+
+        print("получено элементов: " + str(len(simular)))
+
+        com_array.append(simular)
+
+    if len(com_array) == 0:
         return []
+
+    result = [] #com_array[0]
+
+    for test in com_array[0]:
+        flag = True
+        for array in com_array[1:]:
+            if not test in array:
+                flag = False
+        if flag:
+            result.append(test)
+
+    print("Пересечение: " + str(len(result)) + " элементов")
+
+    return result
+
+
+def getSimilar(apikey, artist, track ="", method = "artist"):
+    query = "http://ws.audioscrobbler.com/2.0/?method=" + method + ".getsimilar&artist="
+    query = query + quote(artist) + "&track=" + quote(track) + "&api_key=" + apikey
+
+    print(query)
+
+    req = urlopen(query)
+    # try:
+    #     req = urlopen(query)
+    # except BaseException:
+    #     print("Get Exception!!")
+    #     return []
 
     tree = xml.etree.ElementTree.parse(req)
     root = tree.getroot()
@@ -32,52 +95,65 @@ def getSimilarArtists(apikey, artist, track =""):
         return []
 
     res_array = []
-    for child in root[0]:
-        name = child.find("name").text
-        url = child.find("url").text
-        image_list = child.findall('.//image[@size="large"]')
-        if len(image_list):
-            image = image_list[0].text
-        else:
-            image = child.find("image").text
-        artist = Artist(name, image, url)
-        res_array.append(artist)
+    if method == "artist":
+        for child in root[0]:
+            name = child.find("name").text
+            url = child.find("url").text
+            image_list = child.findall('.//image[@size="large"]')
+            if len(image_list):
+                image = image_list[0].text
+            else:
+                image = child.find("image").text
+            artist = Artist(name, image, url)
+            res_array.append(artist)
+    elif method == "track":
+        for child in root[0]:
+            name = child.find("name").text
+            url = child.find("url").text
+            artist = child.find("artist").find("name").text
+            image_list = child.findall('.//image[@size="large"]')
+            if len(image_list):
+                image = image_list[0].text
+            else:
+                image = child.find("image").text
+            track = Track(artist, name, image, url)
+            res_array.append(track)
 
     return res_array
 
-def getSimilarTracks(apikey, artist, track=""):
-    method = "track"
-    query = "http://ws.audioscrobbler.com/2.0/?method=" + method + ".getsimilar&artist="
-    query = query + artist + "&track=" + track + "&api_key=" + apikey
-
-    print(query)
-
-    try:
-        req = urlopen(query)
-    except BaseException:
-        return []
-
-    tree = xml.etree.ElementTree.parse(req)
-    root = tree.getroot()
-
-
-    if "ok" != root.get('status') or len(root) < 1:
-        return []
-
-    res_array = []
-    for child in root[0]:
-        name = child.find("name").text
-        url = child.find("url").text
-        artist = child.find("artist").find("name").text
-        image_list = child.findall('.//image[@size="large"]')
-        if len(image_list):
-            image = image_list[0].text
-        else:
-            image = child.find("image").text
-        track = Track(artist, name, image, url)
-        res_array.append(track)
-
-    return res_array
+# def getSimilarTracks(apikey, artist, track=""):
+#     method = "track"
+#     query = "http://ws.audioscrobbler.com/2.0/?method=" + method + ".getsimilar&artist="
+#     query = query + artist + "&track=" + track + "&api_key=" + apikey
+#
+#     print(query)
+#
+#     try:
+#         req = urlopen(query)
+#     except BaseException:
+#         return []
+#
+#     tree = xml.etree.ElementTree.parse(req)
+#     root = tree.getroot()
+#
+#
+#     if "ok" != root.get('status') or len(root) < 1:
+#         return []
+#
+#     res_array = []
+#     for child in root[0]:
+#         name = child.find("name").text
+#         url = child.find("url").text
+#         artist = child.find("artist").find("name").text
+#         image_list = child.findall('.//image[@size="large"]')
+#         if len(image_list):
+#             image = image_list[0].text
+#         else:
+#             image = child.find("image").text
+#         track = Track(artist, name, image, url)
+#         res_array.append(track)
+#
+#     return res_array
 
 
 # def getSimilarArtist(apikey, artist, track = ""):

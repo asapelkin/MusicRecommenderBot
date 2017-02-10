@@ -9,7 +9,7 @@ user_out_dict = dict() # словарь, ставящий в соответст�
 user_inp_dict = dict() # словарь, ставящий в соответствие каждому пользователю исходный массив исполнителей/треков для дальнейшей работы
 waitAddFlag = dict() # флаги ожидания добавления нового искомого
 stepNumItems = 10 # количество
-
+error_text = "Композицию необходимо вводить в формате исполнитель - трек или просто имя исполнителя. Для поиска треков необходимо название композиции. Введите /help для получения подробной справки."
 
 @bot.message_handler(commands=['start', 'help'])
 def handle_start_help(message):
@@ -19,7 +19,8 @@ def handle_start_help(message):
         Для осуществления поиска необходимо ввести название композиции в формате\
         исполнитель - трек или просто имя исполнителя, после чего, при необходимости,\
         добавить еще одного исполнителя/композицию или начать поиск композиций или\
-        исполнителя нажатием на соответствующию кнопку.
+        исполнителя нажатием на соответствующию кнопку. Поиск исполнителей возможен \
+        и по другним исполнителям и по композициям, тогда как поиск композиций возможен только по другим композициям.
     """
     bot.send_message(message.chat.id, helpText)
 
@@ -80,35 +81,15 @@ def showAction(call):
     if len(textMessArray) >= 2:
         method = textMessArray[1]
 
-    artTrName = ' '.join((textMessArray[2:]))
-    artTrArr = artTrName.split('-')
+    if call.message.chat.id in user_inp_dict:
+        user_out_dict[call.message.chat.id] = lastfm.getSimilarFromArray(config.lastFmKey, user_inp_dict[call.message.chat.id], method) #lastfm.getSimilar(config.lastFmKey, artist_name, track_name, method)
 
-    artist_name = ""
-    track_name = ""
-
-    if len(artTrArr) >= 1:
-        artist_name = artTrArr[0]
-    if len(artTrArr) == 2:
-        track_name = artTrArr[1]
-    if len(artTrArr) > 2:
-        bot.send_message(call.message.chat.id, "Ошибка. Название необходимо вводить в  формате исполнитель - трек или просто имя исполнителя. Введите /help для получения подробной справки.")
-        return
-
-    artist_name = artist_name.strip()
-    track_name = track_name.strip()
-
-    print("method = " + method)
-    print("artist_name = " + artist_name)
-    print("track_name = " + track_name)
-
-    if method == "artist":
-        user_out_dict[call.message.chat.id] = lastfm.getSimilarArtists(config.lastFmKey, artist_name, track_name)
-    elif method == "track":
-        user_out_dict[call.message.chat.id] = lastfm.getSimilarTracks(config.lastFmKey, artist_name, track_name)
-    else:
-        return
+    user_inp_dict.clear()
+    #if len(user_out_dict[call.message.chat.id]):
     call.data = "next " + method
     sendNext(call)
+
+
 
 
 def sendNext(call):
@@ -117,18 +98,21 @@ def sendNext(call):
     if len(textMessArray) >= 2:
         method = textMessArray[1]
 
+    if not call.message.chat.id in user_out_dict:
+        return
+
     num_items = min(len(user_out_dict[call.message.chat.id]), stepNumItems)
 
     print("num_items = " + str(num_items))
 
     if method == "artist":
         if not num_items:
-            text = "Похожих исполнитей не найдено! Композицию необходимо вводить в формате исполнитель - трек или просто имя исполнителя. Введите /help для получения подробной справки. "
+            text = "Похожих исполнитей не найдено! " + error_text
         else:
             text = "Похожие исполнители:"
     else:
         if not num_items:
-            text = "Похожих треков не найдено! Композицию необходимо вводить в формате исполнитель - трек или просто имя исполнителя. Введите /help для получения подробной справки."
+            text = "Похожих треков не найдено! " + error_text
         else:
             text = "Похожие треки:"
 
@@ -168,5 +152,14 @@ def sendNext(call):
 
 
 if __name__ == '__main__':
-     bot.polling(none_stop=True)
+    bot.polling(none_stop=True)
+    #
+    # result = [1,2,3,4,5,6]
+    #
+    # for i in range(len(result)):
+    #     for array in com_array[1:]:
+    #         for comp in array:
+    #             if not result[i] == comp:
+    #                 result = result[:i-1] + result[i+1:]
+    #                 i = i-1
 
