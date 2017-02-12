@@ -81,12 +81,12 @@ def getSimilar(apikey, artist, track ="", method = "artist"):
 
     print(query)
 
-    req = urlopen(query)
-    # try:
-    #     req = urlopen(query)
-    # except BaseException:
-    #     print("Get Exception!!")
-    #     return []
+    #req = urlopen(query)
+    try:
+        req = urlopen(query)
+    except BaseException:
+        print("Get Exception!!")
+        return []
 
     tree = xml.etree.ElementTree.parse(req)
     root = tree.getroot()
