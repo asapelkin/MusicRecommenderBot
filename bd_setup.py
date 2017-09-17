@@ -1,8 +1,8 @@
 import sqlite3
 import os
 
-if not os.path.exists('data/bot_database.db'):
-    os.makedirs('data/bot_database.db')
+if not os.path.exists('data'):
+    os.makedirs('data')
 
 db = sqlite3.connect('data/bot_database.db')
 cursor = db.cursor()
