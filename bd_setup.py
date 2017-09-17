@@ -1,6 +1,10 @@
 import sqlite3
+import os
 
-db = sqlite3.connect('bot_database.db')
+if not os.path.exists('data/bot_database.db'):
+    os.makedirs('data/bot_database.db')
+
+db = sqlite3.connect('data/bot_database.db')
 cursor = db.cursor()
 cursor.execute('CREATE TABLE users (user_id INTEGER PRIMARY KEY, chat_id VARCHAR(20) UNIQUE)')
 db.commit()
