@@ -12,7 +12,7 @@ stepNumItems = 10 # количество
 error_text = "\nВозможно, неверный формат ввода. \n Для поиска похожих композиций необходимо вводить исходную композицию в формате исполнитель-трек. Для поиска похожих исполнителей возможен ввод только имени исполнителя. Введите /help для получения подробной справки."
 
 def getUserSetting(chat_id, setname):
-    db = sqlite3.connect('bot_database.db')
+    db = sqlite3.connect(database)
     cursor = db.cursor()
     query = 'SELECT setvalue FROM user_settings WHERE user_id = ( SELECT user_id FROM users WHERE chat_id = "' + str(chat_id) + '") and set_id = ( SELECT set_id FROM settings WHERE setname = "' + str(setname) + '")'
     print(query)
@@ -24,7 +24,7 @@ def getUserSetting(chat_id, setname):
 
 
 def setUserSetting(chat_id, setname, setvalue):
-    db = sqlite3.connect('bot_database.db')
+    db = sqlite3.connect(database)
     cursor = db.cursor()
     query = 'INSERT OR REPLACE INTO user_settings (user_id, set_id, setvalue) VALUES (( SELECT user_id FROM users WHERE chat_id = "' + str(chat_id) + '"),  ( SELECT set_id FROM settings WHERE setname = "' + str(setname) + '"),  "' + str(setvalue) + '");'
     print(query)
@@ -34,7 +34,7 @@ def setUserSetting(chat_id, setname, setvalue):
 
 
 def userAdd(chat_id):
-    db = sqlite3.connect('bot_database.db')
+    db = sqlite3.connect(database)
     cursor = db.cursor()
     query = 'SELECT * FROM users WHERE chat_id = '+str(chat_id)+';'
     print(query)
